@@ -2,7 +2,7 @@
 # UseOpenCV.cmake #
 ###################
 
-OPTION(WITH_OPENCV "Build with OpenCV support?" OFF)
+OPTION(WITH_OPENCV "Build with OpenCV support?" ON)
 
 IF(WITH_OPENCV)
   FIND_PACKAGE(OpenCV 3.3.0 REQUIRED )
