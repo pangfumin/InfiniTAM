@@ -100,7 +100,9 @@ void ITMBasicEngine<TVoxel,TIndex>::SaveSceneToMesh(const char *objFileName)
 {
 	if (meshingEngine == NULL) return;
 
-	ITMMesh *mesh = new ITMMesh(settings->GetMemoryType());
+	// (pang): second param is a GPU mem related configration
+	// https://github.com/victorprad/InfiniTAM/issues/94
+	ITMMesh *mesh = new ITMMesh(settings->GetMemoryType() , 1 << 24);
 
 	meshingEngine->MeshScene(mesh, scene);
 	mesh->WriteOBJ(objFileName);
