@@ -6,7 +6,7 @@
 # Specify the target name #
 ###########################
 
-SET(targetname InfiniTAM)
+SET(targetname InfiniTAM_TUM)
 
 ################################
 # Specify the libraries to use #
@@ -30,7 +30,7 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseUVC.cmake)
 #############################
 
 SET(sources
-InfiniTAM.cpp
+InfiniTAM_TUM.cpp
 UIEngine.cpp
 )
 
