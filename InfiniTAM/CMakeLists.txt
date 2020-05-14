@@ -13,6 +13,9 @@ endmacro()
 
 find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(OpenCV 3.4.0 REQUIRED)
+find_package(Eigen3  REQUIRED)
+
 
 find_package(CUDA QUIET)
 CANONIFY_BOOL(CUDA_FOUND)

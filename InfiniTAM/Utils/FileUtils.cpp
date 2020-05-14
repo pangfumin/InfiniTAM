@@ -8,6 +8,8 @@
 #ifdef USE_LIBPNG
 #include <png.h>
 #endif
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 
 using namespace std;
 
@@ -250,174 +252,95 @@ static bool pnm_writedata(FILE *f, int xsize, int ysize, FormatType type, const 
 
 void SaveImageToFile(const ITMUChar4Image* image, const char* fileName, bool flipVertical)
 {
-	FILE *f = fopen(fileName, "wb");
-	if (!pnm_writeheader(f, image->noDims.x, image->noDims.y, RGB_8u)) {
-		fclose(f); return;
-	}
+	// Wrap the RGBA image to be saved with a cv::Mat.
+	cv::Mat imageWrapper(image->noDims.y, image->noDims.x, CV_8UC4, const_cast<ORUtils::Vector4<unsigned char>* >(image->GetData(MEMORYDEVICE_CPU)));
 
-	unsigned char *data = new unsigned char[image->noDims.x*image->noDims.y * 3];
+	// Convert the image to BGR so that it can be saved properly.
+	cv::Mat outImage;
+	cv::cvtColor(imageWrapper, outImage, cv::COLOR_RGBA2BGR);
 
-	Vector2i noDims = image->noDims;
-
-	if (flipVertical)
+	if(flipVertical)
 	{
-		for (int y = 0; y < noDims.y; y++) for (int x = 0; x < noDims.x; x++)
-		{
-			int locId_src, locId_dst;
-			locId_src = x + y * noDims.x;
-			locId_dst = x + (noDims.y - y - 1) * noDims.x;
-
-			data[locId_dst * 3 + 0] = image->GetData(MEMORYDEVICE_CPU)[locId_src].x;
-			data[locId_dst * 3 + 1] = image->GetData(MEMORYDEVICE_CPU)[locId_src].y;
-			data[locId_dst * 3 + 2] = image->GetData(MEMORYDEVICE_CPU)[locId_src].z;
-		}
-	}
-	else
-	{
-		for (int i = 0; i < noDims.x * noDims.y; ++i) {
-			data[i * 3 + 0] = image->GetData(MEMORYDEVICE_CPU)[i].x;
-			data[i * 3 + 1] = image->GetData(MEMORYDEVICE_CPU)[i].y;
-			data[i * 3 + 2] = image->GetData(MEMORYDEVICE_CPU)[i].z;
-		}
+		// Flip around the x axis, converting from a top-left to a bottom-left origin.
+		cv::flip(outImage, outImage, 0);
 	}
 
-	pnm_writedata(f, image->noDims.x, image->noDims.y, RGB_8u, data);
-	delete[] data;
-	fclose(f);
+	// Write the converted image to disk.
+	cv::imwrite(fileName, outImage);
 }
 
 void SaveImageToFile(const ITMShortImage* image, const char* fileName)
 {
-	short *data = (short*)malloc(sizeof(short) * image->dataSize);
-	const short *dataSource = image->GetData(MEMORYDEVICE_CPU);
-	for (size_t i = 0; i < image->dataSize; i++) data[i] = (dataSource[i] << 8) | ((dataSource[i] >> 8) & 255);
+	// Wrap the image to be saved with a cv::Mat.
+	cv::Mat imageWrapper(image->noDims.y, image->noDims.x, CV_16SC1, const_cast<short*>(image->GetData(MEMORYDEVICE_CPU)));
 
-	FILE *f = fopen(fileName, "wb");
-	if (!pnm_writeheader(f, image->noDims.x, image->noDims.y, MONO_16u)) {
-		fclose(f); return;
-	}
-	pnm_writedata(f, image->noDims.x, image->noDims.y, MONO_16u, data);
-	fclose(f);
+	// Convert the image to an unsigned short image to allow it to be saved properly.
+	cv::Mat outImage;
+	imageWrapper.convertTo(outImage, CV_16U);
 
-	delete data;
+	// Write the converted image to disk.
+	cv::imwrite(fileName, outImage);
 }
 
 void SaveImageToFile(const ITMFloatImage* image, const char* fileName)
 {
-	unsigned short *data = new unsigned short[image->dataSize];
-	for (size_t i = 0; i < image->dataSize; i++)
-	{
-		float localData = image->GetData(MEMORYDEVICE_CPU)[i];
-		data[i] = localData >= 0 ? (unsigned short)(localData * 1000.0f) : 0;
-	}
+	// Wrap the image to be saved with a cv::Mat.
+	cv::Mat imageWrapper(image->noDims.y, image->noDims.x, CV_32FC1, const_cast<float*>(image->GetData(MEMORYDEVICE_CPU)));
 
-	FILE *f = fopen(fileName, "wb");
-	if (!pnm_writeheader(f, image->noDims.x, image->noDims.y, MONO_16u)) {
-		fclose(f); return;
-	}
-	pnm_writedata(f, image->noDims.x, image->noDims.y, MONO_16u, data);
-	fclose(f);
+	// Convert the image to an unsigned short image, scaling by 1000 and automatically saturating negative float values to 0.
+	cv::Mat outImage;
+	imageWrapper.convertTo(outImage, CV_16U, 1000.0);
 
-	delete[] data;
+	// Write the converted image to disk.
+	cv::imwrite(fileName, outImage);
 }
 
 bool ReadImageFromFile(ITMUChar4Image* image, const char* fileName)
 {
-	PNGReaderData pngData;
-	bool usepng = false;
+	// Read in a 24-bit BGR image.
+	cv::Mat cvImage = cv::imread(fileName, cv::IMREAD_COLOR);
 
-	int xsize, ysize;
-	FormatType type;
-	bool binary;
-	FILE *f = fopen(fileName, "rb");
-	if (f == NULL) return false;
-	type = pnm_readheader(f, &xsize, &ysize, &binary);
-	if ((type != RGB_8u)&&(type != RGBA_8u)) {
-		fclose(f);
-		f = fopen(fileName, "rb");
-		type = png_readheader(f, xsize, ysize, pngData);
-		if ((type != RGB_8u)&&(type != RGBA_8u)) {
-			fclose(f);
-			return false;
-		}
-		usepng = true;
-	}
-
-	Vector2i newSize(xsize, ysize);
-	image->ChangeDims(newSize);
-	Vector4u *dataPtr = image->GetData(MEMORYDEVICE_CPU);
-
-	unsigned char *data;
-	if (type != RGBA_8u) data = new unsigned char[xsize*ysize * 3];
-	else data = (unsigned char*)image->GetData(MEMORYDEVICE_CPU);
-
-	if (usepng) {
-		if (!png_readdata(f, xsize, ysize, pngData, data)) { fclose(f); delete[] data; return false; }
-	} else if (binary) {
-		if (!pnm_readdata_binary(f, xsize, ysize, RGB_8u, data)) { fclose(f); delete[] data; return false; }
-	} else {
-		if (!pnm_readdata_ascii(f, xsize, ysize, RGB_8u, data)) { fclose(f); delete[] data; return false; }
-	}
-	fclose(f);
-
-	if (type != RGBA_8u)
+	// If the image wasn't read in successfully, early out.
+	if(cvImage.empty() || cvImage.type() != CV_8UC3)
 	{
-		for (int i = 0; i < image->noDims.x*image->noDims.y; ++i)
-		{
-			dataPtr[i].x = data[i * 3 + 0]; dataPtr[i].y = data[i * 3 + 1];
-			dataPtr[i].z = data[i * 3 + 2]; dataPtr[i].w = 255;
-		}
-
-		delete[] data;
+		image->Clear();
+		return false;
 	}
+
+	// Resize the output image to be the same size as the image we've just read in (this is a no-op in most cases).
+	ORUtils::Vector2<int> newSize(cvImage.cols, cvImage.rows);
+	image->ChangeDims(newSize);
+
+	// Wrap the output image with a cv::Mat.
+	cv::Mat imageWrapper(cvImage.size(), CV_8UC4, image->GetData(MEMORYDEVICE_CPU));
+
+	// Copy the image we've just read in into the output image, converting from BGR to RGBA in the process.
+	cv::cvtColor(cvImage, imageWrapper, cv::COLOR_BGR2RGBA);
 
 	return true;
 }
 
 bool ReadImageFromFile(ITMShortImage *image, const char *fileName)
 {
-	PNGReaderData pngData;
-	bool usepng = false;
+	// Read in the image. (Note that short images are read as CV_16UC1.)
+	cv::Mat cvImage = cv::imread(fileName, cv::IMREAD_ANYDEPTH);
 
-	int xsize, ysize;
-	bool binary;
-	FILE *f = fopen(fileName, "rb");
-	if (f == NULL) return false;
-	FormatType type = pnm_readheader(f, &xsize, &ysize, &binary);
-	if ((type != MONO_16s) && (type != MONO_16u)) {
-		fclose(f);
-		f = fopen(fileName, "rb");
-		type = png_readheader(f, xsize, ysize, pngData);
-		if ((type != MONO_16s) && (type != MONO_16u)) {
-			fclose(f);
-			return false;
-		}
-		usepng = true;
-		binary = true;
+	// If the image wasn't read in successfully, early out.
+	if(cvImage.empty() || cvImage.type() != CV_16UC1)
+	{
+		image->Clear();
+		return false;
 	}
 
-	short *data = new short[xsize*ysize];
-	if (usepng) {
-		if (!png_readdata(f, xsize, ysize, pngData, data)) { fclose(f); delete[] data; return false; }
-	} else if (binary) {
-		if (!pnm_readdata_binary(f, xsize, ysize, type, data)) { fclose(f); delete[] data; return false; }
-	} else {
-		if (!pnm_readdata_ascii(f, xsize, ysize, type, data)) { fclose(f); delete[] data; return false; }
-	}
-	fclose(f);
-
-	Vector2i newSize(xsize, ysize);
+	// Resize the output image to be the same size as the image we've just read in (this is a no-op in most cases).
+	ORUtils::Vector2<int> newSize(cvImage.cols, cvImage.rows);
 	image->ChangeDims(newSize);
-	if (binary) {
-		for (int i = 0; i < image->noDims.x*image->noDims.y; ++i) {
-			image->GetData(MEMORYDEVICE_CPU)[i] = (data[i] << 8) | ((data[i] >> 8) & 255);
-		}
-	} else {
-		for (int i = 0; i < image->noDims.x*image->noDims.y; ++i) {
-			image->GetData(MEMORYDEVICE_CPU)[i] = data[i];
-		}
-	}
-	delete[] data;
+
+	// Wrap the output image with a cv::Mat.
+	cv::Mat imageWrapper(cvImage.size(), CV_16SC1, image->GetData(MEMORYDEVICE_CPU));
+
+	// Copy the image we've just read in into the output image, converting from 16U to 16S in the process.
+	cvImage.convertTo(imageWrapper, CV_16S);
 
 	return true;
 }

@@ -10,12 +10,14 @@ IF(PNG_FOUND)
   add_definitions(-DUSE_LIBPNG)
 ENDIF()
 
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 add_library(Utils
 FileUtils.cpp
 FileUtils.h
 NVTimer.h
 )
-
+target_link_libraries(Utils ${OpenCV_LIBS})
 IF(PNG_FOUND)
   target_link_libraries(Utils ${PNG_LIBRARIES})
 ENDIF()

@@ -13,3 +13,5 @@ x64/
 /InfiniTAM/Files/Teddy/Frames
 .idea/
 cmake-build-debug/
+.vscode/
+build/
