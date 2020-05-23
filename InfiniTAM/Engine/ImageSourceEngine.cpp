@@ -26,6 +26,7 @@ ImageFileReader::ImageFileReader(const char *calibFilename, const char *rgbImage
 	cached_depth = NULL;
 }
 
+
 ImageFileReader::~ImageFileReader()
 {
 	delete cached_rgb;
@@ -105,6 +106,76 @@ Vector2i ImageFileReader::getRGBImageSize(void)
 	if (cached_rgb != NULL) return cached_rgb->noDims;
 	return cached_depth->noDims;
 }
+
+
+
+ImageFileReader1::ImageFileReader1(const char *calibFilename,
+                                   const Vector2i rgbImageSize,
+                                   const Vector2i depthImageSize,
+                 const std::vector<std::string> *rgbImageLists,
+                 const std::vector<std::string> *depthImageLists,
+                 const std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> *cameraPoseLists)
+        : ImageSourceEngine(calibFilename),
+        rgbImageSize_(rgbImageSize),
+        depthImageSize_(depthImageSize),
+        rgbImageLists_(rgbImageLists), depthImageLists_(depthImageLists),
+          cameraPoseLists_(cameraPoseLists)
+                 {
+         currentFrameNo = 0;
+
+
+}
+
+ImageFileReader1::~ImageFileReader1()
+{
+
+}
+
+
+bool ImageFileReader1::hasMoreImages(void)
+{
+
+    return currentFrameNo < rgbImageLists_->size();
+}
+
+void ImageFileReader1::getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth)
+{
+
+    if (!ReadImageFromFile(rgb, rgbImageLists_->at(currentFrameNo).c_str()))
+            printf("error reading file '%s'\n", rgbImageLists_->at(currentFrameNo).c_str());
+
+    if (!ReadImageFromFile(rawDepth, depthImageLists_->at(currentFrameNo).c_str()))
+            printf("error reading file '%s'\n", depthImageLists_->at(currentFrameNo).c_str());
+
+
+    ++currentFrameNo;
+}
+
+void ImageFileReader1::getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth, Eigen::Matrix4d* pose)
+{
+
+    if (!ReadImageFromFile(rgb, rgbImageLists_->at(currentFrameNo).c_str()))
+        printf("error reading file '%s'\n", rgbImageLists_->at(currentFrameNo).c_str());
+
+    if (!ReadImageFromFile(rawDepth, depthImageLists_->at(currentFrameNo).c_str()))
+        printf("error reading file '%s'\n", depthImageLists_->at(currentFrameNo).c_str());
+
+    *pose = cameraPoseLists_->at(currentFrameNo);
+
+    ++currentFrameNo;
+}
+
+Vector2i ImageFileReader1::getDepthImageSize(void)
+{
+    return depthImageSize_;
+}
+
+Vector2i ImageFileReader1::getRGBImageSize(void)
+{
+
+    return rgbImageSize_;
+}
+
 
 CalibSource::CalibSource(const char *calibFilename, Vector2i setImageSize, float ratio)
 	: ImageSourceEngine(calibFilename)

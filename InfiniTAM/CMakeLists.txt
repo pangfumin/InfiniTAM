@@ -15,6 +15,7 @@ find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(OpenCV 3.4.0 REQUIRED)
 find_package(Eigen3  REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
 
 
 find_package(CUDA QUIET)
@@ -79,7 +80,12 @@ ENDIF()
 add_executable(InfiniTAM_cli InfiniTAM_cli.cpp)
 target_link_libraries(InfiniTAM_cli Engine)
 target_link_libraries(InfiniTAM_cli Utils)
+
 add_executable(InfiniTAM InfiniTAM.cpp)
 target_link_libraries(InfiniTAM Engine)
 target_link_libraries(InfiniTAM Utils)
+
+add_executable(InfiniTAM_tum InfiniTAM_tum.cpp)
+target_link_libraries(InfiniTAM_tum Engine)
+target_link_libraries(InfiniTAM_tum Utils)
 
