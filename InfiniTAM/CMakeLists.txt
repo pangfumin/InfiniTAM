@@ -89,3 +89,9 @@ add_executable(InfiniTAM_tum InfiniTAM_tum.cpp)
 target_link_libraries(InfiniTAM_tum Engine)
 target_link_libraries(InfiniTAM_tum Utils)
 
+
+include_directories(./)
+add_executable(voxel_hasing_pipeline test/voxel_hashing/voxel_hasing_pipeline.cpp
+        test/voxel_hashing/voxel_hasing.cpp)
+target_link_libraries(voxel_hasing_pipeline Engine)
+target_link_libraries(voxel_hasing_pipeline Utils)

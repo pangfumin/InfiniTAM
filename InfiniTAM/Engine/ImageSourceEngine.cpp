@@ -154,13 +154,14 @@ void ImageFileReader1::getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth)
 void ImageFileReader1::getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth, Eigen::Matrix4d* pose)
 {
 
-    if (!ReadImageFromFile(rgb, rgbImageLists_->at(currentFrameNo).c_str()))
+    if (rgb && !ReadImageFromFile(rgb, rgbImageLists_->at(currentFrameNo).c_str()))
         printf("error reading file '%s'\n", rgbImageLists_->at(currentFrameNo).c_str());
 
-    if (!ReadImageFromFile(rawDepth, depthImageLists_->at(currentFrameNo).c_str()))
+    if (rawDepth && !ReadImageFromFile(rawDepth, depthImageLists_->at(currentFrameNo).c_str()))
         printf("error reading file '%s'\n", depthImageLists_->at(currentFrameNo).c_str());
 
-    *pose = cameraPoseLists_->at(currentFrameNo);
+    if(pose)
+    	*pose = cameraPoseLists_->at(currentFrameNo);
 
     ++currentFrameNo;
 }
