@@ -39,9 +39,9 @@ ITMLibSettings::ITMLibSettings(void)
 	/// enable or disable bilateral depth filtering;
 	useBilateralFilter = false;
 
-	//trackerType = TRACKER_COLOR;
+//	trackerType = TRACKER_COLOR;
 	trackerType = TRACKER_ICP;
-	//trackerType = TRACKER_REN;
+//	trackerType = TRACKER_REN;
 	//trackerType = TRACKER_IMU;
 	//trackerType = TRACKER_WICP;
 

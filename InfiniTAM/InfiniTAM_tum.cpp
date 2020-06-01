@@ -107,7 +107,7 @@ int main(int argc, char** argv)
 try
 {
 
-    std::string datasetPath = "/home/pang/dataset/tum/rgbd_dataset_freiburg1_desk";
+    std::string datasetPath = "/home/pang/dataset/tum/rgbd_dataset_freiburg3_long_office_household";
     std::string associationFile = datasetPath + "/associated.txt";
     std::string strGroundTruthFilename = datasetPath + "/groundtruth.txt";
     std::string  calib_file = datasetPath + "/calib.txt";
