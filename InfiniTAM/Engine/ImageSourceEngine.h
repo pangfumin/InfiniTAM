@@ -20,7 +20,7 @@ namespace InfiniTAM
 
 			virtual bool hasMoreImages(void) = 0;
 			virtual void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth) = 0;
-			virtual void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth, Eigen::Matrix4d* pose ) = 0;
+			virtual void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth, Eigen::Matrix4f* pose ) = 0;
 			virtual Vector2i getDepthImageSize(void) = 0;
 			virtual Vector2i getRGBImageSize(void) = 0;
 		};
@@ -58,7 +58,7 @@ namespace InfiniTAM
         private:
             const std::vector<std::string> * rgbImageLists_;
             const std::vector<std::string> * depthImageLists_;
-            const std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> *cameraPoseLists_;
+            const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> *cameraPoseLists_;
 
             Vector2i depthImageSize_, rgbImageSize_;
             int currentFrameNo;
@@ -69,11 +69,11 @@ namespace InfiniTAM
                             const Vector2i depthImageSize,
                             const std::vector<std::string> *rgbImageLists,
                             const std::vector<std::string> *depthImageLists,
-                            const std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> *cameraPoseLists);
+                            const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> *cameraPoseLists);
             ~ImageFileReader1();
             bool hasMoreImages(void);
             void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth);
-            void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth, Eigen::Matrix4d* pose );
+            void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth, Eigen::Matrix4f* pose );
             Vector2i getDepthImageSize(void);
             Vector2i getRGBImageSize(void);
         };
@@ -90,7 +90,7 @@ namespace InfiniTAM
 
 			bool hasMoreImages(void) { return true; }
 			void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth) { }
-            void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth, Eigen::Matrix4d* pose ){
+            void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth, Eigen::Matrix4f* pose ){
 
 			}
 			Vector2i getDepthImageSize(void) { return imgSize; }
@@ -120,7 +120,7 @@ namespace InfiniTAM
 
 			bool hasMoreImages(void);
 			void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth);
-            void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth, Eigen::Matrix4d* pose ){}
+            void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth, Eigen::Matrix4f* pose ){}
 
 			Vector2i getDepthImageSize(void) { return imgSize; }
 			Vector2i getRGBImageSize(void) { return imgSize; }

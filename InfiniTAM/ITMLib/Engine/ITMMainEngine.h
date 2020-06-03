@@ -4,7 +4,8 @@
 
 #include "../ITMLib.h"
 #include "../Utils/ITMLibSettings.h"
-
+#include <fstream>
+#include <Eigen/Core>
 /** \mainpage
     This is the API reference documentation for InfiniTAM. For a general
     overview additional documentation can be found in the included Technical
@@ -94,7 +95,8 @@ namespace ITMLib
 			ITMScene<ITMVoxel, ITMVoxelIndex>* GetScene(void) { return scene; }
 
 			/// Process a frame with rgb and depth images and optionally a corresponding imu measurement
-			void ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement = NULL);
+			void ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement = NULL,
+			        Eigen::Matrix4f* camera_pose = NULL);
 
 			// Gives access to the data structure used internally to store any created meshes
 			ITMMesh* GetMesh(void) { return mesh; }
@@ -124,6 +126,8 @@ namespace ITMLib
 			*/
 			ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d = Vector2i(-1,-1));
 			~ITMMainEngine();
+
+			std::ofstream  ofs_;
 		};
 	}
 }

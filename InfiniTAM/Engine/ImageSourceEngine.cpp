@@ -114,7 +114,7 @@ ImageFileReader1::ImageFileReader1(const char *calibFilename,
                                    const Vector2i depthImageSize,
                  const std::vector<std::string> *rgbImageLists,
                  const std::vector<std::string> *depthImageLists,
-                 const std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> *cameraPoseLists)
+                 const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> *cameraPoseLists)
         : ImageSourceEngine(calibFilename),
         rgbImageSize_(rgbImageSize),
         depthImageSize_(depthImageSize),
@@ -151,7 +151,7 @@ void ImageFileReader1::getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth)
     ++currentFrameNo;
 }
 
-void ImageFileReader1::getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth, Eigen::Matrix4d* pose)
+void ImageFileReader1::getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth, Eigen::Matrix4f* pose)
 {
 
     if (rgb && !ReadImageFromFile(rgb, rgbImageLists_->at(currentFrameNo).c_str()))

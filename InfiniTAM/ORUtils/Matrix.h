@@ -99,6 +99,8 @@ namespace ORUtils {
 			return mtrans;
 		}
 
+
+
 		_CPU_AND_GPU_CODE_ inline friend Matrix4 operator * (const Matrix4 &lhs, const Matrix4 &rhs)	{
 			Matrix4 r;
 			r.setZeros();
@@ -221,6 +223,8 @@ namespace ORUtils {
 			out *= 1 / det;
 			return true;
 		}
+
+
 
 		friend std::ostream& operator<<(std::ostream& os, const Matrix4<T>& dt) {
 			for (int y = 0; y < 4; y++)

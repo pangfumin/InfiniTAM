@@ -4,8 +4,22 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 using namespace ITMLib::Engine;
+
+Eigen::Matrix<float,4,4, Eigen::RowMajor> toEigenMatrix4f(const ORUtils::Matrix4<float>& m) {
+    Eigen::Matrix<float,4,4> mat4;
+    m.getValues(mat4.data());
+    return mat4;
+}
+
+//Matrix4f fromEigenMatrix4f(const Eigen::Matrix<float,4,4>& m) {
+//    Matrix4f mat4;
+//    mat4.setValues(m.data());
+//    return mat4;
+//}
 
 ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d)
 {
@@ -69,6 +83,8 @@ ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib 
 
 	fusionActive = true;
 	mainProcessingActive = true;
+
+	ofs_.open("/home/pang/infini.txt");
 }
 
 ITMMainEngine::~ITMMainEngine()
@@ -110,7 +126,8 @@ void ITMMainEngine::SaveSceneToMesh(const char *objFileName)
 	mesh->WriteSTL(objFileName);
 }
 
-void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement)
+void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement,
+                                 Eigen::Matrix4f* camera_pose )
 {
 	// prepare image and turn it into a depth image
 	if (imuMeasurement==NULL) viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter,settings->modelSensorNoise);
@@ -120,6 +137,34 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 	// tracking
 	trackingController->Track(trackingState, view);
+
+//    Matrix4f pose = trackingState->pose_d->GetM();
+//    std::cout << "pose: \n" << pose << std::endl;
+    Matrix4f inv_pose = trackingState->pose_d->GetInvM();
+    Eigen::Matrix4f inv_eigen_pose = toEigenMatrix4f(inv_pose);
+
+//    trackingState->pose_d->SetM()
+
+
+////    pose.inv(inv_pose);
+    std::cout << "inv pose: \n" << inv_pose << std::endl;
+    std::cout << "eigen: \n" << *camera_pose << std::endl;
+//    std::cout << "inv_eigen_pose: \n" << inv_eigen_pose << std::endl;
+    Matrix4f  temp;
+    temp.setValues(camera_pose->data());
+    std::cout << "temp: \n" << temp << std::endl;
+    trackingState->pose_d->SetInvM(temp);
+
+
+
+//    Eigen::Matrix3f R = inv_eigen_pose.topLeftCorner(3,3);
+//    Eigen::Quaternionf q(R);
+//    Eigen::Vector3f t = inv_eigen_pose.topRightCorner(3,1);
+//    ofs_ << t.x() << " " << t.y() << " " << t.z() << " " << q.w() << " " << q.x() << " " << q.y() << " " << q.z() << std::endl;
+
+
+
+
 
 	// fusion
 	if (fusionActive) denseMapper->ProcessFrame(view, trackingState, scene, renderState_live);

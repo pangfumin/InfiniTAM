@@ -83,7 +83,10 @@ void LoadGroundTruth(const string &strGroundTruthFilename,
 }
 
 void FindCorrespondingPose(vector<double> &vQueryTimestamps, const TemporalBuffer<Vec7>& groundTruthBuffer,
-        std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>>& poses) {
+        std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>& poses) {
+    bool is_first_pose = true;
+    Eigen::Matrix<double,4,4>  first_T;
+
     for (auto ts : vQueryTimestamps) {
         int64_t  ts_ns = ts * 1e9;
         Vec7 vec;
@@ -97,7 +100,14 @@ void FindCorrespondingPose(vector<double> &vQueryTimestamps, const TemporalBuffe
         q.coeffs() = vec.tail(4);
         T.topLeftCorner(3,3) = q.toRotationMatrix();
         T.topRightCorner(3,1) = t;
-        poses.push_back(T);
+        if (is_first_pose) {
+            first_T = T;
+            is_first_pose = false;
+
+        }
+
+        T = first_T.inverse() * T;
+        poses.push_back(T.cast<float>());
     }
 
 }
@@ -126,7 +136,7 @@ try
     LoadGroundTruth(strGroundTruthFilename, groundTruthBuffer);
     std::cout << "groundTruthBuffer: " << groundTruthBuffer.size() << std::endl;
 
-    std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> camera_poses;
+    std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> camera_poses;
     FindCorrespondingPose(vTimestamps, groundTruthBuffer, camera_poses);
     std::cout << "camera_pose: " << camera_poses.size() << std::endl;
 

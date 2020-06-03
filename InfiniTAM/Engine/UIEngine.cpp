@@ -442,7 +442,10 @@ void UIEngine::GetScreenshot(ITMUChar4Image *dest) const
 void UIEngine::ProcessFrame()
 {
 	if (!imageSource->hasMoreImages()) return;
-	imageSource->getImages(inputRGBImage, inputRawDepthImage);
+//    *inputCameraPose = Eigen::Matrix4f::Identity();
+	imageSource->getImages(inputRGBImage, inputRawDepthImage, &inputCameraPose);
+	std::cout << "inputCameraPose: \n" << inputCameraPose << std::endl;
+
 
 	if (imuSource != NULL) {
 		if (!imuSource->hasMoreMeasurements()) return;
@@ -466,8 +469,8 @@ void UIEngine::ProcessFrame()
 	sdkStartTimer(&timer_instant); sdkStartTimer(&timer_average);
 
 	//actual processing on the mailEngine
-	if (imuSource != NULL) mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage, inputIMUMeasurement);
-	else mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage);
+	if (imuSource != NULL) mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage, inputIMUMeasurement, &inputCameraPose);
+	else mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage, NULL, &inputCameraPose);
 
 #ifndef COMPILE_WITHOUT_CUDA
 	ITMSafeCall(cudaThreadSynchronize());

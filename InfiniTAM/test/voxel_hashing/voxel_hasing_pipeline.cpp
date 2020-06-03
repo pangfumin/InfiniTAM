@@ -97,12 +97,13 @@ void FindCorrespondingPose(vector<double> &vQueryTimestamps, const TemporalBuffe
 
 int main() {
 
-    std::string datasetPath = "/home/pang/dataset/tum/rgbd_dataset_freiburg1_desk";
+    std::string datasetPath = "/home/pang/dataset/tum/rgbd_dataset_freiburg3_long_office_household";
     std::string associationFile = datasetPath + "/associated.txt";
     std::string strGroundTruthFilename = datasetPath + "/groundtruth.txt";
     std::string  calib_file = datasetPath + "/calib.txt";
 
 
+    std::ofstream ofs("/home/pang/debug.txt");
     std::cout << "associationFile: " << associationFile << std::endl;
     vector<string> vstrImageFilenamesRGB;
     vector<string> vstrImageFilenamesD;
@@ -128,16 +129,29 @@ int main() {
 
     int cnt = 0;
 
+    Eigen::Matrix4d first_pose ;
     while (imageSource->hasMoreImages()) {
        ITMUChar4Image rgb(imageSize, true, true);
 //       ITMShortImage *rawDepth, Eigen::Matrix4d* pose
-        std::cout << cnt ++ << std::endl;
-       imageSource->getImages(&rgb, NULL, NULL);
+
+        Eigen::Matrix4d pose;
+       imageSource->getImages(&rgb, NULL, &pose);
+       if (cnt == 0) {
+           first_pose = pose;
+       }
+       pose = first_pose.inverse() * pose;
+       Eigen::Matrix3d R = pose.topLeftCorner(3,3);
+       Eigen::Quaterniond q(R);
+       Eigen::Vector3d t = pose.topRightCorner(3,1);
+       ofs << t.x() << " " << t.y() << " " << t.z() << " " << q.w() << " " << q.x() << " " << q.y() << " " << q.z() << std::endl;
+
+       std::cout << pose << std::endl;
 //        rgb.UpdateHostFromDevice();
 
+        std::cout << cnt ++ << std::endl;
        cv::Mat cv_color(imageSize[1], imageSize[0], CV_8UC4, rgb.GetData(MEMORYDEVICE_CPU));
        cv::imshow("image", cv_color);
-       cv::waitKey();
+       cv::waitKey(10);
     }
 
 

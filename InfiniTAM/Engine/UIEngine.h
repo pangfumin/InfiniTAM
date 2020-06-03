@@ -52,6 +52,7 @@ namespace InfiniTAM
 			ITMMainEngine::GetImageType outImageType[NUM_WIN];
 
 			ITMUChar4Image *inputRGBImage; ITMShortImage *inputRawDepthImage;
+			Eigen::Matrix4f inputCameraPose;
 			ITMIMUMeasurement *inputIMUMeasurement;
 
 			bool freeviewActive;
@@ -64,6 +65,9 @@ namespace InfiniTAM
 
 			int currentFrameNo; bool isRecording;
 		public:
+            // http://eigen.tuxfamily.org/dox-devel/group__TopicStructHavingEigenMembers.html
+            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 			static UIEngine* Instance(void) {
 				if (instance == NULL) instance = new UIEngine();
 				return instance;
